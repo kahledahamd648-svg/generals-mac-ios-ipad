@@ -1,0 +1,129 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          brew update
+          brew install cmake ninja meson pkgconf xcodegen
+
+      - name: Setup vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg "$HOME/vcpkg"
+          "$HOME/vcpkg/bootstrap-vcpkg.sh"
+          echo "VCPKG_ROOT=$HOME/vcpkg" >> "$GITHUB_ENV"
+
+      - name: Fetch MoltenVK and stage fonts
+        run: |
+          chmod +x scripts/build/ios/*.sh
+          ./scripts/build/ios/fetch-moltenvk.sh
+          ./scripts/build/ios/stage-fonts.sh
+
+      - name: Configure and build Zero Hour engine for iOS
+        run: |
+          cmake --preset ios-vulkan
+          cmake --build build/ios-vulkan --target z_generals -j$(sysctl -n hw.ncpu)
+
+      - name: Package unsigned IPA for KSign
+        run: |
+          set -euo pipefail
+          PROJECT_ROOT="$PWD"
+          BUILD_DIR="${PROJECT_ROOT}/build/ios-vulkan"
+          IOS_DIR="${PROJECT_ROOT}/ios"
+          DERIVED="${IOS_DIR}/build"
+          OUT_DIR="${PROJECT_ROOT}/build/ios-package"
+          APP_NAME="GeneralsXZH"
+          GAME_BIN="${BUILD_DIR}/GeneralsMD/GeneralsXZH.app/GeneralsXZH"
+          DXVK_BUILD="${BUILD_DIR}/_deps/dxvk-build-macos"
+
+          if [[ ! -f "${GAME_BIN}" ]]; then
+            echo "ERROR: engine binary not found at ${GAME_BIN}"
+            exit 1
+          fi
+
+          (cd "${IOS_DIR}" && xcodegen generate --quiet)
+
+          xcodebuild -project "${IOS_DIR}/${APP_NAME}.xcodeproj" \
+            -scheme "${APP_NAME}" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "${DERIVED}" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+          SHELL_APP="${DERIVED}/Build/Products/Release-iphoneos/${APP_NAME}.app"
+          rm -rf "${OUT_DIR}"
+          mkdir -p "${OUT_DIR}"
+          cp -R "${SHELL_APP}" "${OUT_DIR}/"
+          APP="${OUT_DIR}/${APP_NAME}.app"
+
+          cp "${GAME_BIN}" "${APP}/${APP_NAME}"
+
+          mkdir -p "${APP}/Frameworks"
+          for lib in \
+            "${DXVK_BUILD}/src/d3d8/libdxvk_d3d8.0.dylib" \
+            "${DXVK_BUILD}/src/d3d9/libdxvk_d3d9.0.dylib" \
+            "${BUILD_DIR}/_deps/sdl3-build/libSDL3.0.dylib" \
+            "${BUILD_DIR}/_deps/sdl3_image-build/libSDL3_image.0.dylib" \
+            "${BUILD_DIR}/_deps/openal_soft-build/libopenal.1.24.2.dylib" \
+            "${BUILD_DIR}/libgamespy.dylib"; do
+            if [[ -f "${lib}" ]]; then
+              cp "${lib}" "${APP}/Frameworks/"
+            elif [[ "$(basename "${lib}")" != "libgamespy.dylib" ]]; then
+              echo "ERROR: missing required dylib ${lib}"
+              exit 1
+            fi
+          done
+
+          if [[ -f "${APP}/Frameworks/libopenal.1.24.2.dylib" ]]; then
+            mv "${APP}/Frameworks/libopenal.1.24.2.dylib" "${APP}/Frameworks/libopenal.1.dylib"
+          fi
+
+          MVK_FRAMEWORK="${HOME}/GeneralsX/MoltenVK/MoltenVK/MoltenVK/dynamic/MoltenVK.xcframework/ios-arm64/MoltenVK.framework"
+          cp -R "${MVK_FRAMEWORK}" "${APP}/Frameworks/"
+
+          mkdir -p "${APP}/GameData/fonts"
+          cp "${HOME}/GeneralsX/ios-staging/fonts/"*.ttf "${APP}/GameData/fonts/"
+          cp "${IOS_DIR}/config/dxvk.conf" "${APP}/GameData/dxvk.conf"
+          cp "${IOS_DIR}/config/Options.ini" "${APP}/GameData/DefaultOptions.ini"
+
+          ICON_SRC="${IOS_DIR}/Stub/Assets.xcassets/AppIcon.appiconset/icon.png"
+          if [[ -f "${ICON_SRC}" ]]; then
+            sips -z 120 120 "${ICON_SRC}" --out "${APP}/AppIcon60x60@2x.png" >/dev/null
+            sips -z 152 152 "${ICON_SRC}" --out "${APP}/AppIcon76x76@2x.png" >/dev/null
+            sips -z 167 167 "${ICON_SRC}" --out "${APP}/AppIcon83.5x83.5@2x.png" >/dev/null
+          fi
+
+          install_name_tool -add_rpath "@executable_path/Frameworks" "${APP}/${APP_NAME}" 2>/dev/null || true
+
+          for f in "${APP}/Frameworks/"*.dylib; do
+            [[ -f "$f" ]] && codesign --force --sign - --timestamp=none "$f"
+          done
+          codesign --force --sign - --timestamp=none "${APP}/Frameworks/MoltenVK.framework"
+          codesign --force --sign - --timestamp=none "${APP}"
+
+          mkdir -p "${OUT_DIR}/Payload"
+          cp -R "${APP}" "${OUT_DIR}/Payload/"
+          (cd "${OUT_DIR}" && zip -qry GeneralsXZH-iOS-Unsigned.ipa Payload)
+          ls -lh "${OUT_DIR}/GeneralsXZH-iOS-Unsigned.ipa"
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeneralsXZH-iOS-IPA
+          path: build/ios-package/GeneralsXZH-iOS-Unsigned.ipa
+          retention-days: 14
