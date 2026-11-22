@@ -25,11 +25,33 @@ jobs:
           "$HOME/vcpkg/bootstrap-vcpkg.sh"
           echo "VCPKG_ROOT=$HOME/vcpkg" >> "$GITHUB_ENV"
 
-      - name: Fetch MoltenVK and stage fonts
+      - name: Fetch MoltenVK, setup VULKAN_SDK, and stage fonts
         run: |
           chmod +x scripts/build/ios/*.sh
           ./scripts/build/ios/fetch-moltenvk.sh
           ./scripts/build/ios/stage-fonts.sh
+
+          mkdir -p "$HOME/vulkan-sdk-ios/lib"
+          MVK_STATIC=$(find "$HOME/GeneralsX/MoltenVK" -path "*/ios-arm64/libMoltenVK.a" | head -n 1)
+          MVK_INC=$(find "$HOME/GeneralsX/MoltenVK" -type d -name "vulkan" | head -n 1)
+
+          if [[ -z "$MVK_STATIC" || -z "$MVK_INC" ]]; then
+            MVK_URL=$(grep -Eo 'https://github\.com/KhronosGroup/MoltenVK/releases/download/[^"'\'' ]+' scripts/build/ios/fetch-moltenvk.sh | head -n 1)
+            if [[ -z "$MVK_URL" ]]; then
+              MVK_URL="https://github.com/KhronosGroup/MoltenVK/releases/download/v1.2.11/MoltenVK-all.tar"
+            fi
+            mkdir -p /tmp/mvk-full
+            curl -L "$MVK_URL" -o /tmp/mvk-full/moltenvk.tar
+            tar -xf /tmp/mvk-full/moltenvk.tar -C /tmp/mvk-full
+            MVK_STATIC=$(find /tmp/mvk-full -path "*/ios-arm64/libMoltenVK.a" | head -n 1)
+            MVK_INC=$(find /tmp/mvk-full -type d -name "vulkan" | head -n 1)
+          fi
+
+          XC_ROOT=$(dirname "$(dirname "$MVK_STATIC")")
+          INC_ROOT=$(dirname "$MVK_INC")
+          cp -R "$XC_ROOT" "$HOME/vulkan-sdk-ios/lib/MoltenVK.xcframework"
+          cp -R "$INC_ROOT" "$HOME/vulkan-sdk-ios/include"
+          echo "VULKAN_SDK=$HOME/vulkan-sdk-ios" >> "$GITHUB_ENV"
 
       - name: Configure and build Zero Hour engine for iOS
         run: |
