@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -53,9 +53,36 @@ jobs:
           cp -R "$INC_ROOT" "$HOME/vulkan-sdk-ios/include"
           echo "VULKAN_SDK=$HOME/vulkan-sdk-ios" >> "$GITHUB_ENV"
 
+      - name: Pre-download FetchContent dependencies
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p "$HOME/deps-src/SDL3" "$HOME/deps-src/SDL3_image" "$HOME/deps-src/openal-soft" /tmp/deps-dl
+
+          if gh release download release-3.4.2 --repo libsdl-org/SDL --pattern "SDL3-3.4.2.tar.gz" --dir /tmp/deps-dl; then
+            tar -xzf /tmp/deps-dl/SDL3-3.4.2.tar.gz --strip-components=1 -C "$HOME/deps-src/SDL3"
+          else
+            git clone --depth 1 --branch release-3.4.2 https://github.com/libsdl-org/SDL.git "$HOME/deps-src/SDL3"
+          fi
+
+          if gh release download release-3.4.0 --repo libsdl-org/SDL_image --pattern "SDL3_image-3.4.0.tar.gz" --dir /tmp/deps-dl; then
+            tar -xzf /tmp/deps-dl/SDL3_image-3.4.0.tar.gz --strip-components=1 -C "$HOME/deps-src/SDL3_image"
+          else
+            git clone --depth 1 --branch release-3.4.0 https://github.com/libsdl-org/SDL_image.git "$HOME/deps-src/SDL3_image"
+          fi
+
+          if gh release download 1.24.2 --repo kcat/openal-soft --pattern "openal-soft-1.24.2.tar.bz2" --dir /tmp/deps-dl; then
+            tar -xjf /tmp/deps-dl/openal-soft-1.24.2.tar.bz2 --strip-components=1 -C "$HOME/deps-src/openal-soft"
+          else
+            git clone --depth 1 --branch 1.24.2 https://github.com/kcat/openal-soft.git "$HOME/deps-src/openal-soft"
+          fi
+
       - name: Configure and build Zero Hour engine for iOS
         run: |
-          cmake --preset ios-vulkan
+          cmake --preset ios-vulkan \
+            -DFETCHCONTENT_SOURCE_DIR_SDL3="$HOME/deps-src/SDL3" \
+            -DFETCHCONTENT_SOURCE_DIR_SDL3_IMAGE="$HOME/deps-src/SDL3_image" \
+            -DFETCHCONTENT_SOURCE_DIR_OPENAL_SOFT="$HOME/deps-src/openal-soft"
           cmake --build build/ios-vulkan --target z_generals -j$(sysctl -n hw.ncpu)
 
       - name: Package unsigned IPA for KSign
@@ -88,6 +115,11 @@ jobs:
             build
 
           SHELL_APP="${DERIVED}/Build/Products/Release-iphoneos/${APP_NAME}.app"
+          if [[ ! -d "${SHELL_APP}" ]]; then
+            echo "ERROR: shell app not produced at ${SHELL_APP}"
+            exit 1
+          fi
+
           rm -rf "${OUT_DIR}"
           mkdir -p "${OUT_DIR}"
           cp -R "${SHELL_APP}" "${OUT_DIR}/"
@@ -105,6 +137,7 @@ jobs:
             "${BUILD_DIR}/libgamespy.dylib"; do
             if [[ -f "${lib}" ]]; then
               cp "${lib}" "${APP}/Frameworks/"
+              echo "Embedded $(basename "${lib}")"
             elif [[ "$(basename "${lib}")" != "libgamespy.dylib" ]]; then
               echo "ERROR: missing required dylib ${lib}"
               exit 1
@@ -115,8 +148,13 @@ jobs:
             mv "${APP}/Frameworks/libopenal.1.24.2.dylib" "${APP}/Frameworks/libopenal.1.dylib"
           fi
 
-          MVK_FRAMEWORK="${HOME}/GeneralsX/MoltenVK/MoltenVK/MoltenVK/dynamic/MoltenVK.xcframework/ios-arm64/MoltenVK.framework"
+          MVK_FRAMEWORK=$(find "${HOME}/GeneralsX/MoltenVK" /tmp/mvk-full -path "*/ios-arm64/MoltenVK.framework" 2>/dev/null | head -n 1)
+          if [[ -z "${MVK_FRAMEWORK}" || ! -d "${MVK_FRAMEWORK}" ]]; then
+            echo "ERROR: MoltenVK.framework not found"
+            exit 1
+          fi
           cp -R "${MVK_FRAMEWORK}" "${APP}/Frameworks/"
+          echo "Embedded MoltenVK.framework"
 
           mkdir -p "${APP}/GameData/fonts"
           cp "${HOME}/GeneralsX/ios-staging/fonts/"*.ttf "${APP}/GameData/fonts/"
@@ -144,7 +182,7 @@ jobs:
           ls -lh "${OUT_DIR}/GeneralsXZH-iOS-Unsigned.ipa"
 
       - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: GeneralsXZH-iOS-IPA
           path: build/ios-package/GeneralsXZH-iOS-Unsigned.ipa
