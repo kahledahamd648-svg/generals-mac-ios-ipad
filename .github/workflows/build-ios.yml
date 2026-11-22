@@ -19,6 +19,14 @@ jobs:
           brew update
           brew install cmake ninja meson pkgconf xcodegen glslang
 
+      - name: Cache vcpkg binary archives
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg
+          key: vcpkg-ios-${{ hashFiles('vcpkg.json', 'cmake/triplets/*.cmake') }}
+          restore-keys: |
+            vcpkg-ios-
+
       - name: Setup vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg "$HOME/vcpkg"
@@ -79,10 +87,20 @@ jobs:
 
       - name: Configure and build Zero Hour engine for iOS
         run: |
+          mkdir -p build/ios-vulkan/_deps
+          ln -sfn "$HOME/deps-src/SDL3" build/ios-vulkan/_deps/sdl3-src
+          ln -sfn "$HOME/deps-src/SDL3_image" build/ios-vulkan/_deps/sdl3_image-src
+          ln -sfn "$HOME/deps-src/openal-soft" build/ios-vulkan/_deps/openal_soft-src
+
           cmake --preset ios-vulkan \
             -DFETCHCONTENT_SOURCE_DIR_SDL3="$HOME/deps-src/SDL3" \
             -DFETCHCONTENT_SOURCE_DIR_SDL3_IMAGE="$HOME/deps-src/SDL3_image" \
             -DFETCHCONTENT_SOURCE_DIR_OPENAL_SOFT="$HOME/deps-src/openal-soft"
+
+          ln -sfn "$HOME/deps-src/SDL3" build/ios-vulkan/_deps/sdl3-src
+          ln -sfn "$HOME/deps-src/SDL3_image" build/ios-vulkan/_deps/sdl3_image-src
+          ln -sfn "$HOME/deps-src/openal-soft" build/ios-vulkan/_deps/openal_soft-src
+
           cmake --build build/ios-vulkan --target z_generals -j$(sysctl -n hw.ncpu)
 
       - name: Package unsigned IPA for KSign
@@ -98,7 +116,11 @@ jobs:
           DXVK_BUILD="${BUILD_DIR}/_deps/dxvk-build-macos"
 
           if [[ ! -f "${GAME_BIN}" ]]; then
-            echo "ERROR: engine binary not found at ${GAME_BIN}"
+            GAME_BIN=$(find "${BUILD_DIR}/GeneralsMD" -maxdepth 3 -type f \( -name "GeneralsXZH" -o -name "z_generals" \) | head -n 1)
+          fi
+
+          if [[ -z "${GAME_BIN}" || ! -f "${GAME_BIN}" ]]; then
+            echo "ERROR: engine binary not found in ${BUILD_DIR}/GeneralsMD"
             exit 1
           fi
 
@@ -135,10 +157,15 @@ jobs:
             "${BUILD_DIR}/_deps/sdl3_image-build/libSDL3_image.0.dylib" \
             "${BUILD_DIR}/_deps/openal_soft-build/libopenal.1.24.2.dylib" \
             "${BUILD_DIR}/libgamespy.dylib"; do
-            if [[ -f "${lib}" ]]; then
-              cp "${lib}" "${APP}/Frameworks/"
-              echo "Embedded $(basename "${lib}")"
-            elif [[ "$(basename "${lib}")" != "libgamespy.dylib" ]]; then
+            LIB_NAME="$(basename "${lib}")"
+            FOUND_LIB="${lib}"
+            if [[ ! -f "${FOUND_LIB}" ]]; then
+              FOUND_LIB=$(find "${BUILD_DIR}" -name "${LIB_NAME}" 2>/dev/null | head -n 1)
+            fi
+            if [[ -n "${FOUND_LIB}" && -f "${FOUND_LIB}" ]]; then
+              cp "${FOUND_LIB}" "${APP}/Frameworks/"
+              echo "Embedded ${LIB_NAME}"
+            elif [[ "${LIB_NAME}" != "libgamespy.dylib" && "${LIB_NAME}" != "libopenal.1.24.2.dylib" ]]; then
               echo "ERROR: missing required dylib ${lib}"
               exit 1
             fi
