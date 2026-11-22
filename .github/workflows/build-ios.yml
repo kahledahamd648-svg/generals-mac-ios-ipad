@@ -116,7 +116,7 @@ jobs:
           DXVK_BUILD="${BUILD_DIR}/_deps/dxvk-build-macos"
 
           if [[ ! -f "${GAME_BIN}" ]]; then
-            GAME_BIN=$(find "${BUILD_DIR}/GeneralsMD" -maxdepth 3 -type f \( -name "GeneralsXZH" -o -name "z_generals" \) | head -n 1)
+            GAME_BIN=$(find "${BUILD_DIR}/GeneralsMD" -maxdepth 3 -type f \( -name "GeneralsXZH" -o -name "z_generals" \) | head -n 1 || true)
           fi
 
           if [[ -z "${GAME_BIN}" || ! -f "${GAME_BIN}" ]]; then
@@ -160,7 +160,7 @@ jobs:
             LIB_NAME="$(basename "${lib}")"
             FOUND_LIB="${lib}"
             if [[ ! -f "${FOUND_LIB}" ]]; then
-              FOUND_LIB=$(find "${BUILD_DIR}" -name "${LIB_NAME}" 2>/dev/null | head -n 1)
+              FOUND_LIB=$(find "${BUILD_DIR}" -name "${LIB_NAME}" 2>/dev/null | head -n 1 || true)
             fi
             if [[ -n "${FOUND_LIB}" && -f "${FOUND_LIB}" ]]; then
               cp "${FOUND_LIB}" "${APP}/Frameworks/"
@@ -175,32 +175,56 @@ jobs:
             mv "${APP}/Frameworks/libopenal.1.24.2.dylib" "${APP}/Frameworks/libopenal.1.dylib"
           fi
 
-          MVK_FRAMEWORK=$(find "${HOME}/GeneralsX/MoltenVK" /tmp/mvk-full -path "*/ios-arm64/MoltenVK.framework" 2>/dev/null | head -n 1)
-          if [[ -z "${MVK_FRAMEWORK}" || ! -d "${MVK_FRAMEWORK}" ]]; then
-            echo "ERROR: MoltenVK.framework not found"
-            exit 1
+          SEARCH_DIRS=()
+          if [[ -d "${HOME}/GeneralsX/MoltenVK" ]]; then SEARCH_DIRS+=("${HOME}/GeneralsX/MoltenVK"); fi
+          if [[ -d "${HOME}/vulkan-sdk-ios" ]]; then SEARCH_DIRS+=("${HOME}/vulkan-sdk-ios"); fi
+          if [[ -d "/tmp/mvk-full" ]]; then SEARCH_DIRS+=("/tmp/mvk-full"); fi
+
+          MVK_FRAMEWORK=""
+          if [[ ${#SEARCH_DIRS[@]} -gt 0 ]]; then
+            MVK_FRAMEWORK=$(find "${SEARCH_DIRS[@]}" -path "*/ios-arm64/MoltenVK.framework" -type d 2>/dev/null | head -n 1 || true)
           fi
-          cp -R "${MVK_FRAMEWORK}" "${APP}/Frameworks/"
-          echo "Embedded MoltenVK.framework"
+
+          if [[ -n "${MVK_FRAMEWORK}" && -d "${MVK_FRAMEWORK}" ]]; then
+            cp -R "${MVK_FRAMEWORK}" "${APP}/Frameworks/"
+            echo "Embedded MoltenVK.framework"
+          else
+            echo "MoltenVK is statically linked via libMoltenVK.a, skipping framework embed."
+          fi
 
           mkdir -p "${APP}/GameData/fonts"
-          cp "${HOME}/GeneralsX/ios-staging/fonts/"*.ttf "${APP}/GameData/fonts/"
-          cp "${IOS_DIR}/config/dxvk.conf" "${APP}/GameData/dxvk.conf"
-          cp "${IOS_DIR}/config/Options.ini" "${APP}/GameData/DefaultOptions.ini"
+          if compgen -G "${HOME}/GeneralsX/ios-staging/fonts/*" > /dev/null; then
+            cp -R "${HOME}/GeneralsX/ios-staging/fonts/"* "${APP}/GameData/fonts/"
+            echo "Copied staged fonts"
+          else
+            find "${HOME}/GeneralsX" "${PROJECT_ROOT}" -iname "*.ttf" -exec cp {} "${APP}/GameData/fonts/" \; 2>/dev/null || true
+            echo "Copied fallback fonts"
+          fi
+
+          if [[ -f "${IOS_DIR}/config/dxvk.conf" ]]; then
+            cp "${IOS_DIR}/config/dxvk.conf" "${APP}/GameData/dxvk.conf"
+          fi
+          if [[ -f "${IOS_DIR}/config/Options.ini" ]]; then
+            cp "${IOS_DIR}/config/Options.ini" "${APP}/GameData/DefaultOptions.ini"
+          fi
 
           ICON_SRC="${IOS_DIR}/Stub/Assets.xcassets/AppIcon.appiconset/icon.png"
           if [[ -f "${ICON_SRC}" ]]; then
-            sips -z 120 120 "${ICON_SRC}" --out "${APP}/AppIcon60x60@2x.png" >/dev/null
-            sips -z 152 152 "${ICON_SRC}" --out "${APP}/AppIcon76x76@2x.png" >/dev/null
-            sips -z 167 167 "${ICON_SRC}" --out "${APP}/AppIcon83.5x83.5@2x.png" >/dev/null
+            sips -z 120 120 "${ICON_SRC}" --out "${APP}/AppIcon60x60@2x.png" >/dev/null || true
+            sips -z 152 152 "${ICON_SRC}" --out "${APP}/AppIcon76x76@2x.png" >/dev/null || true
+            sips -z 167 167 "${ICON_SRC}" --out "${APP}/AppIcon83.5x83.5@2x.png" >/dev/null || true
           fi
 
           install_name_tool -add_rpath "@executable_path/Frameworks" "${APP}/${APP_NAME}" 2>/dev/null || true
 
           for f in "${APP}/Frameworks/"*.dylib; do
-            [[ -f "$f" ]] && codesign --force --sign - --timestamp=none "$f"
+            if [[ -f "$f" ]]; then
+              codesign --force --sign - --timestamp=none "$f"
+            fi
           done
-          codesign --force --sign - --timestamp=none "${APP}/Frameworks/MoltenVK.framework"
+          if [[ -d "${APP}/Frameworks/MoltenVK.framework" ]]; then
+            codesign --force --sign - --timestamp=none "${APP}/Frameworks/MoltenVK.framework"
+          fi
           codesign --force --sign - --timestamp=none "${APP}"
 
           mkdir -p "${OUT_DIR}/Payload"
