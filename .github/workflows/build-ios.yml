@@ -7,6 +7,12 @@ jobs:
   build-ios:
     runs-on: macos-15-intel
     timeout-minutes: 90
+    env:
+      CCACHE_DIR: ${{ runner.temp }}/ccache
+      CCACHE_MAXSIZE: "2G"
+      CCACHE_COMPRESS: "1"
+      CCACHE_COMPRESSLEVEL: "6"
+      CCACHE_SLOPPINESS: "pch_defines,time_macros,include_file_mtime,include_file_ctime"
 
     steps:
       - name: Checkout repository
@@ -19,7 +25,16 @@ jobs:
           HOMEBREW_NO_AUTO_UPDATE: "1"
           HOMEBREW_NO_INSTALL_FROM_API: "0"
         run: |
-          brew install --force-bottle cmake ninja meson pkgconf xcodegen glslang
+          brew install --force-bottle cmake ninja meson pkgconf xcodegen glslang ccache
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ccache-ios-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-ios-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}-
+            ccache-ios-${{ runner.os }}-
 
       - name: Cache vcpkg binary archives
         uses: actions/cache@v4
@@ -89,6 +104,12 @@ jobs:
 
       - name: Configure and build Zero Hour engine for iOS
         run: |
+          ccache --set-config=max_size="$CCACHE_MAXSIZE"
+          ccache --set-config=compress="$CCACHE_COMPRESS"
+          ccache --set-config=compress_level="$CCACHE_COMPRESSLEVEL"
+          ccache --set-config=sloppiness="$CCACHE_SLOPPINESS"
+          ccache -z
+
           mkdir -p build/ios-vulkan/_deps
           ln -sfn "$HOME/deps-src/SDL3" build/ios-vulkan/_deps/sdl3-src
           ln -sfn "$HOME/deps-src/SDL3_image" build/ios-vulkan/_deps/sdl3_image-src
@@ -97,13 +118,16 @@ jobs:
           cmake --preset ios-vulkan \
             -DFETCHCONTENT_SOURCE_DIR_SDL3="$HOME/deps-src/SDL3" \
             -DFETCHCONTENT_SOURCE_DIR_SDL3_IMAGE="$HOME/deps-src/SDL3_image" \
-            -DFETCHCONTENT_SOURCE_DIR_OPENAL_SOFT="$HOME/deps-src/openal-soft"
+            -DFETCHCONTENT_SOURCE_DIR_OPENAL_SOFT="$HOME/deps-src/openal-soft" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
           ln -sfn "$HOME/deps-src/SDL3" build/ios-vulkan/_deps/sdl3-src
           ln -sfn "$HOME/deps-src/SDL3_image" build/ios-vulkan/_deps/sdl3_image-src
           ln -sfn "$HOME/deps-src/openal-soft" build/ios-vulkan/_deps/openal_soft-src
 
-          cmake --build build/ios-vulkan --target z_generals -j$(sysctl -n hw.ncpu)
+          cmake --build build/ios-vulkan --target z_generals --parallel $(sysctl -n hw.ncpu)
+          ccache -s
 
       - name: Package unsigned IPA for KSign
         run: |
