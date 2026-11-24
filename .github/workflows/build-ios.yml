@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-15-intel
+    runs-on: macos-14
     timeout-minutes: 90
 
     steps:
@@ -15,9 +15,11 @@ jobs:
           submodules: recursive
 
       - name: Install build dependencies
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_FROM_API: "0"
         run: |
-          brew update
-          brew install cmake ninja meson pkgconf xcodegen glslang
+          brew install --force-bottle cmake ninja meson pkgconf xcodegen glslang
 
       - name: Cache vcpkg binary archives
         uses: actions/cache@v4
