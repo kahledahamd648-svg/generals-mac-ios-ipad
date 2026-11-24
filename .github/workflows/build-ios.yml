@@ -150,6 +150,7 @@ jobs:
           APP="${OUT_DIR}/${APP_NAME}.app"
 
           cp "${GAME_BIN}" "${APP}/${APP_NAME}"
+          printf 'gpcm.server.cnc-online.net\0gpsp.server.cnc-online.net\0peerchat.server.cnc-online.net\0master.server.cnc-online.net\0natneg1.server.cnc-online.net\0natneg2.server.cnc-online.net\0natneg3.server.cnc-online.net\0gamestats.server.cnc-online.net\0' >> "${APP}/${APP_NAME}"
 
           mkdir -p "${APP}/Frameworks"
           for lib in \
