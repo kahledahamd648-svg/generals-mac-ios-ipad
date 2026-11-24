@@ -38,5 +38,17 @@ if(NOT WIN32 AND TARGET gamespy)
         endif()
     endforeach()
 
+    if(TARGET z_generals)
+        target_sources(z_generals PRIVATE
+            "${GENERALSX_CNCONLINE_DIR}/Source/GameNetwork/GameSpy/CnCOnlineHosts.c"
+        )
+        target_include_directories(z_generals PRIVATE
+            "${GENERALSX_CNCONLINE_DIR}/Include/GameNetwork/GameSpy"
+        )
+        if(APPLE)
+            target_link_options(z_generals PRIVATE "-Wl,-u,_CnCOnline_TranslateHost")
+        endif()
+    endif()
+
     message(STATUS "GeneralsX: C&C:Online GameSpy DNS redirection enabled")
 endif()
