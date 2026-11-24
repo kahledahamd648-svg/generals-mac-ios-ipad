@@ -17,7 +17,7 @@
 */
 
 /****************************************************************************\
-TCP                   Neal Kettler        neal@westwood.com
+TCP                   Neal Kettler        neal@cnc-online.net
 ******************************************************************************
 
 A general purpose TCP class that can be used in either CLIENT or

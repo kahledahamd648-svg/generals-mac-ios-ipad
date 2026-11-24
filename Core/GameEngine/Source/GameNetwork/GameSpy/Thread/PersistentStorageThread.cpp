@@ -845,7 +845,6 @@ void PSThreadClass::Thread_Function()
 #endif
 	/**/
 
-	//strcpy(StatsServerHostname, "sdkdev.gamespy.com");
 
 	PSRequest req;
 	while ( running )

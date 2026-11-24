@@ -76,7 +76,7 @@ void dumpBufferToLog(const void *vBuf, Int len, const char *fname, Int line)
 #endif // DEBUG_LOGGING
 
 /**
- * ResolveIP turns a string ("games2.westwood.com", or "192.168.0.1") into
+ * ResolveIP turns a hostname or IPv4 address such as "192.168.0.1" into
  * a 32-bit unsigned integer.
  */
 UnsignedInt ResolveIP(AsciiString host)

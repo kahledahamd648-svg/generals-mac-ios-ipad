@@ -31,8 +31,8 @@ void FormatURLFromRegistry( std::string& gamePatchURL, std::string& mapPatchURL,
 	std::string language = "english";
 	unsigned int version = 0; // invalid version - can't get on with a corrupt reg.
 	unsigned int mapVersion = 0; // invalid version - can't get on with a corrupt reg.
-	// GeneralsX: servserv.generals.ea.com is offline; use the C&C:Online (Revora) HTTP host.
-	std::string baseURL = "http://http.server.cnc-online.net/servserv/";
+	// GeneralsX: use the C&C:Online (Revora) HTTP host.
+	std::string baseURL = "https://server.cnc-online.net/servserv/";
 	baseURL.append(sku);
 	baseURL.append("/");
 

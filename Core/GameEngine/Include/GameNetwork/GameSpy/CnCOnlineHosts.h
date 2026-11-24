@@ -35,9 +35,15 @@
 #include <stddef.h>
 
 #define CNCONLINE_DOMAIN            "server.cnc-online.net"
+#define CNCONLINE_GPCM_HOST         "gpcm." CNCONLINE_DOMAIN
+#define CNCONLINE_GPSP_HOST         "gpsp." CNCONLINE_DOMAIN
 #define CNCONLINE_PEERCHAT_HOST     "peerchat." CNCONLINE_DOMAIN
-#define CNCONLINE_HTTP_HOST         "http." CNCONLINE_DOMAIN
+#define CNCONLINE_MASTER_HOST       "master." CNCONLINE_DOMAIN
+#define CNCONLINE_NATNEG1_HOST      "natneg1." CNCONLINE_DOMAIN
+#define CNCONLINE_NATNEG2_HOST      "natneg2." CNCONLINE_DOMAIN
+#define CNCONLINE_NATNEG3_HOST      "natneg3." CNCONLINE_DOMAIN
 #define CNCONLINE_GAMESTATS_HOST    "gamestats." CNCONLINE_DOMAIN
+#define CNCONLINE_HTTP_HOST         "http." CNCONLINE_DOMAIN
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,6 +53,11 @@ extern "C" {
 // Returns 'out' when a translation was written, or 'host' unchanged when the name
 // is not a GameSpy/C&C:Online service name (e.g. LAN addresses, dotted IPs).
 const char *CnCOnline_TranslateHost(const char *host, char *out, size_t outSize);
+
+#if !defined(_WIN32)
+struct sockaddr;
+int CnCOnline_connect(int socket, const struct sockaddr *address, size_t addressLength);
+#endif
 
 #ifdef __cplusplus
 }

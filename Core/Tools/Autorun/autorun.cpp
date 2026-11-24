@@ -153,7 +153,7 @@
 #define		HELP_FILENAME					"HELP:FILENAME"//"Support\\eahelp.hlp"
 
 #define		SHOW_GAMESPY_BUTTON				FALSE
-#define		GAMESPY_WEBSITE					"http://www.gamespyarcade.com/features/launch.asp?svcname=ccrenegade&distID=391"
+#define		GAMESPY_WEBSITE					"https://server.cnc-online.net/games/ccrenegade"
 
 #define		RESOURCE_FILE					"Autorun.loc"
 #define		SETUP_INI_FILE1					"Setup\\Setup.ini"
@@ -168,8 +168,8 @@
 #define		CLASS_NAME						"%s Autorun"
 #define		GAME_MAIN_WINDOW_NAME			"%s Game Window"
 
-//#define	GAME_WEBSITE					"http://www.westwood.com/"
-#define		GAME_WEBSITE					"http://generals.ea.com"
+//#define	GAME_WEBSITE					"https://server.cnc-online.net/"
+#define		GAME_WEBSITE					"https://server.cnc-online.net/games/ccgenerals"
 
 #define		AUTORUN_MUTEX_OBJECT			"01AF9993-3492-11d3-8F6F-0060089C05B1"
 //#define		GAME_MUTEX_OBJECT			"C6D925A3-7A9B-4ca3-866D-8B4D506C3665"

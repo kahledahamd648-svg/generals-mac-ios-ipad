@@ -328,7 +328,7 @@ bool nextToken(std::string& base, std::string& tok, const char* seps = nullptr)
 
 static void queuePatch(bool mandatory, std::string downloadURL)
 {
-	// downloadURL is of the form "ftp://ftp.ea.com:user@pass/pub/munkee/bananna.rtp"
+	// downloadURL is of the form "ftp://server.cnc-online.net/pub/munkee/bananna.rtp"
 	QueuedDownload q;
 	bool success = true;
 

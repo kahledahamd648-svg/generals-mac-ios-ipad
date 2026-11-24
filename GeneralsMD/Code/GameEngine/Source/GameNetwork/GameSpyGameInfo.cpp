@@ -440,7 +440,7 @@ GameSpyGameInfo::GameSpyGameInfo()
 		setSlotPointer(i, &m_GameSpySlot[i]);
 
 	UnsignedInt localIP;
-	if (GetLocalChatConnectionAddress("peerchat.gamespy.com", 6667, localIP))
+	if (GetLocalChatConnectionAddress("peerchat.server.cnc-online.net", 6667, localIP))
 	{
 		localIP = ntohl(localIP); // The IP returned from GetLocalChatConnectionAddress is in network byte order.
 		setLocalIP(localIP);
@@ -531,7 +531,6 @@ void GameSpyLaunchGame()
 				/*
 				if (i == 1)
 				{
-					user.format(",%s@207.138.47.15:8088", tmpUserName.str());
 				}
 				else
 				*/

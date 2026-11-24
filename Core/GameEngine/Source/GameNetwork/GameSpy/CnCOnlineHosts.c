@@ -27,11 +27,12 @@
 // This file itself is compiled WITHOUT those definitions, so it calls the real
 // resolver functions.
 //
-// Published C&C:Online records (all point at the same backend):
-//   gpcm / peerchat / master / natneg / gamestats / http / login .server.cnc-online.net
-// Unpublished names the SDK would otherwise generate, and their mapping:
-//   gpsp.*                -> gpcm.server.cnc-online.net
-//   natneg1|2|3.*         -> natneg.server.cnc-online.net
+// Published C&C:Online records:
+//   gpcm / gpsp / peerchat / master / natneg1 / natneg2 / natneg3 / gamestats
+//   / http / login .server.cnc-online.net
+// Legacy SDK names and their mapping:
+//   gpsp.*                -> gpsp.server.cnc-online.net
+//   natneg1|2|3.*         -> natneg1|2|3.server.cnc-online.net
 //   <game>.ms<N>.*        -> master.server.cnc-online.net
 //   <game>.master.*       -> master.server.cnc-online.net
 //   <game>.available.*    -> master.server.cnc-online.net
@@ -42,6 +43,15 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdint.h>
+
+#if !defined(_WIN32)
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#endif
 
 #define CNC_GAMESPY_SUFFIX    ".gamespy.com"
 #define CNC_CNCONLINE_SUFFIX  "." CNCONLINE_DOMAIN
@@ -88,12 +98,20 @@ static const char *cnc_service_for(const char *prefix, size_t len)
 		}
 	}
 
-	if (cnc_label_equals(label, llen, "gpcm") || cnc_label_equals(label, llen, "gpsp"))
+	if (cnc_label_equals(label, llen, "gpcm"))
 		return "gpcm";
+	if (cnc_label_equals(label, llen, "gpsp"))
+		return "gpsp";
 	if (cnc_label_equals(label, llen, "peerchat"))
 		return "peerchat";
-	if (cnc_label_equals(label, llen, "natneg") || cnc_label_prefix_digits(label, llen, "natneg"))
+	if (cnc_label_equals(label, llen, "natneg"))
 		return "natneg";
+	if (cnc_label_equals(label, llen, "natneg1"))
+		return "natneg1";
+	if (cnc_label_equals(label, llen, "natneg2"))
+		return "natneg2";
+	if (cnc_label_equals(label, llen, "natneg3"))
+		return "natneg3";
 	if (cnc_label_equals(label, llen, "master") || cnc_label_equals(label, llen, "available")
 		|| cnc_label_prefix_digits(label, llen, "ms"))
 		return "master";
@@ -138,9 +156,90 @@ const char *CnCOnline_TranslateHost(const char *host, char *out, size_t outSize)
 	if (lower[len - 1] == '.')
 		lower[--len] = '\0';
 
+#if !defined(_WIN32)
+	{
+		struct in_addr numericAddress;
+		uint32_t address;
+		if (inet_pton(AF_INET, lower, &numericAddress) == 1)
+		{
+			address = ntohl(numericAddress.s_addr);
+			if ((address >> 24) != 127 &&
+				address != 0x00000000 &&
+				address != 0xFFFFFFFF &&
+				(address >> 24) != 10 &&
+				!((address >> 24) == 172 && ((address >> 16) & 0xFF) >= 16 && ((address >> 16) & 0xFF) <= 31) &&
+				((address >> 24) != 192 || ((address >> 16) & 0xFF) != 168))
+			{
+				snprintf(out, outSize, "%s", CNCONLINE_DOMAIN);
+				fprintf(stderr, "[CNCOnline] redirect legacy IPv4 %s -> %s\n", host, CNCONLINE_DOMAIN);
+				return out;
+			}
+		}
+	}
+#endif
+
 	if (strcmp(lower, CNC_SERVSERV_HOST) == 0)
 	{
-		return cnc_write_host(out, outSize, CNCONLINE_HTTP_HOST, strlen(CNCONLINE_HTTP_HOST), "") ? out : host;
+		const char *translated = cnc_write_host(out, outSize, CNCONLINE_HTTP_HOST, strlen(CNCONLINE_HTTP_HOST), "") ? out : host;
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return translated;
+	}
+
+	if (strcmp(lower, "gpcm.gamespy.com") == 0)
+	{
+		const char *translated = CNCONLINE_GPCM_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
+	}
+	if (strcmp(lower, "gpsp.gamespy.com") == 0)
+	{
+		const char *translated = CNCONLINE_GPSP_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
+	}
+	if (strcmp(lower, "peerchat.gamespy.com") == 0)
+	{
+		const char *translated = CNCONLINE_PEERCHAT_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
+	}
+	if (strcmp(lower, "master.gamespy.com") == 0)
+	{
+		const char *translated = CNCONLINE_MASTER_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
+	}
+	if (strcmp(lower, "gamestats.gamespy.com") == 0)
+	{
+		const char *translated = CNCONLINE_GAMESTATS_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
+	}
+	if (strcmp(lower, "natneg1.gamespy.com") == 0)
+	{
+		const char *translated = CNCONLINE_NATNEG1_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
+	}
+	if (strcmp(lower, "natneg2.gamespy.com") == 0)
+	{
+		const char *translated = CNCONLINE_NATNEG2_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
+	}
+	if (strcmp(lower, "natneg3.gamespy.com") == 0)
+	{
+		const char *translated = CNCONLINE_NATNEG3_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
 	}
 
 	if (len > gsLen && strcmp(lower + len - gsLen, CNC_GAMESPY_SUFFIX) == 0)
@@ -161,13 +260,17 @@ const char *CnCOnline_TranslateHost(const char *host, char *out, size_t outSize)
 	service = cnc_service_for(lower, len);
 	if (service != NULL)
 	{
-		return cnc_write_host(out, outSize, service, strlen(service), CNC_CNCONLINE_SUFFIX) ? out : host;
+		const char *translated = cnc_write_host(out, outSize, service, strlen(service), CNC_CNCONLINE_SUFFIX) ? out : host;
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return translated;
 	}
 
 	if (fromGameSpy)
 	{
-		// Unknown GameSpy service: <prefix>.gamespy.com -> <prefix>.server.cnc-online.net
-		return cnc_write_host(out, outSize, lower, len, CNC_CNCONLINE_SUFFIX) ? out : host;
+		const char *translated = CNCONLINE_DOMAIN;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect legacy %s -> %s\n", host, translated);
+		return translated;
 	}
 
 	return host; // already a C&C:Online name we have no special mapping for
@@ -178,13 +281,10 @@ const char *CnCOnline_TranslateHost(const char *host, char *out, size_t outSize)
 ///////////////////////////////////////////////////////////////////////////////
 #if !defined(_WIN32)
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
 struct hostent *CnCOnline_gethostbyname(const char *name);
 int CnCOnline_getaddrinfo(const char *node, const char *service,
 	const struct addrinfo *hints, struct addrinfo **res);
+int CnCOnline_connect(int socketDescriptor, const struct sockaddr *address, size_t addressLength);
 
 struct hostent *CnCOnline_gethostbyname(const char *name)
 {
@@ -197,6 +297,58 @@ int CnCOnline_getaddrinfo(const char *node, const char *service,
 {
 	char buffer[CNC_MAX_HOST];
 	return getaddrinfo(CnCOnline_TranslateHost(node, buffer, sizeof(buffer)), service, hints, res);
+}
+
+int CnCOnline_connect(int socketDescriptor, const struct sockaddr *address, size_t addressLength)
+{
+	struct sockaddr_in localAddress;
+	struct sockaddr_in resolvedAddress;
+	struct addrinfo hints;
+	struct addrinfo *result = NULL;
+	struct addrinfo *entry;
+
+	if (address == NULL || address->sa_family != AF_INET || addressLength < sizeof(localAddress))
+		return connect(socketDescriptor, address, (socklen_t)addressLength);
+
+	memcpy(&localAddress, address, sizeof(localAddress));
+	{
+		uint32_t numericAddress = ntohl(localAddress.sin_addr.s_addr);
+		if (numericAddress == 0x00000000 ||
+			numericAddress == 0xFFFFFFFF ||
+			(numericAddress >> 24) == 127 ||
+			(numericAddress >> 24) == 10 ||
+			((numericAddress >> 24) == 172 && ((numericAddress >> 16) & 0xFF) >= 16 && ((numericAddress >> 16) & 0xFF) <= 31) ||
+			((numericAddress >> 24) == 192 && ((numericAddress >> 16) & 0xFF) == 168))
+		{
+			return connect(socketDescriptor, address, (socklen_t)addressLength);
+		}
+	}
+
+	fprintf(stderr, "[CNCOnline] redirect legacy IPv4 socket %s:%u -> %s\n",
+		inet_ntoa(localAddress.sin_addr), ntohs(localAddress.sin_port), CNCONLINE_DOMAIN);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	if (getaddrinfo(CNCONLINE_DOMAIN, NULL, &hints, &result) != 0)
+		return connect(socketDescriptor, address, (socklen_t)addressLength);
+
+	for (entry = result; entry != NULL; entry = entry->ai_next)
+	{
+		if (entry->ai_family == AF_INET && entry->ai_addr != NULL)
+		{
+			memcpy(&resolvedAddress, entry->ai_addr, sizeof(resolvedAddress));
+			resolvedAddress.sin_port = localAddress.sin_port;
+			fprintf(stderr, "[CNCOnline] resolved socket target %s\n", inet_ntoa(resolvedAddress.sin_addr));
+			{
+				int connectResult = connect(socketDescriptor, (const struct sockaddr *)&resolvedAddress, sizeof(resolvedAddress));
+				freeaddrinfo(result);
+				return connectResult;
+			}
+		}
+	}
+
+	freeaddrinfo(result);
+	return connect(socketDescriptor, address, (socklen_t)addressLength);
 }
 
 #endif // !_WIN32

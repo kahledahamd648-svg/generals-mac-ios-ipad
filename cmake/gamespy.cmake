@@ -33,6 +33,7 @@ if(NOT WIN32 AND TARGET gamespy)
             target_compile_definitions(${_gs_module} PRIVATE
                 gethostbyname=CnCOnline_gethostbyname
                 getaddrinfo=CnCOnline_getaddrinfo
+                connect=CnCOnline_connect
             )
         endif()
     endforeach()
