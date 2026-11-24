@@ -104,10 +104,6 @@ jobs:
           CCACHE_COMPRESSLEVEL: "6"
           CCACHE_SLOPPINESS: "pch_defines,time_macros,include_file_mtime,include_file_ctime"
         run: |
-          ccache --set-config=max_size="$CCACHE_MAXSIZE"
-          ccache --set-config=compress="$CCACHE_COMPRESS"
-          ccache --set-config=compress_level="$CCACHE_COMPRESSLEVEL"
-          ccache --set-config=sloppiness="$CCACHE_SLOPPINESS"
           ccache -z
 
           mkdir -p build/ios-vulkan/_deps
