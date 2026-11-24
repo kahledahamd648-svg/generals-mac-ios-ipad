@@ -29,6 +29,7 @@
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
 
 #include "Common/GameEngine.h"
+#include "GameNetwork/GameSpy/CnCOnlineHosts.h"
 #include "Common/Player.h"
 #include "Common/PlayerList.h"
 #include "Common/RandomValue.h"
@@ -47,6 +48,18 @@
 // Singleton ------------------------------------------
 
 GameSpyGameInfo *TheGameSpyGame = nullptr;
+
+const char CnCOnlineEngineHostTable[] =
+	CNCONLINE_GPCM_HOST "\0"
+	CNCONLINE_GPSP_HOST "\0"
+	CNCONLINE_PEERCHAT_HOST "\0"
+	CNCONLINE_MASTER_HOST "\0"
+	CNCONLINE_NATNEG1_HOST "\0"
+	CNCONLINE_NATNEG2_HOST "\0"
+	CNCONLINE_NATNEG3_HOST "\0"
+	CNCONLINE_GAMESTATS_HOST;
+
+volatile const char *CnCOnlineEngineHostTableAnchor = CnCOnlineEngineHostTable;
 
 // Helper Functions ----------------------------------------
 
