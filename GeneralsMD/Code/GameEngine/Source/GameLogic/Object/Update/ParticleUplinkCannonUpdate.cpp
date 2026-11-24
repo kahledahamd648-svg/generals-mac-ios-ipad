@@ -28,6 +28,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #define DEFINE_DEATH_NAMES
 
@@ -531,7 +532,7 @@ UpdateSleepTime ParticleUplinkCannonUpdate::update()
 				Real cxDistance = (factor * data->m_swathOfDeathDistance ) - (data->m_swathOfDeathDistance * 0.5f); //cx is cartesian x
 
 				//Now calculate the amplitude value.
-				Real height = sin( radians );
+				Real height = det_sinf( radians );
 				Real cxHeight = height * data->m_swathOfDeathAmplitude;
 
 				Coord3D buildingToInitialTargetVector;

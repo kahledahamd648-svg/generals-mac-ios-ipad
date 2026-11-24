@@ -26,6 +26,7 @@
 // Implementation of AI behavior states
 // Author: Michael S. Booth, January 2002
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 
 #include "Common/ActionManager.h"
@@ -3675,7 +3676,7 @@ StateReturnType AIAttackMoveToState::update()
 		if (distSqr < sqr(static_cast<float>(ATTACK_CLOSE_ENOUGH_CELLS)*PATHFIND_CELL_SIZE_F)) {
 			return ret;
 		}
-		DEBUG_LOG(("AIAttackMoveToState::update Distance from goal %f, retrying.", sqrt(distSqr)));
+		DEBUG_LOG(("AIAttackMoveToState::update Distance from goal %f, retrying.", det_sqrtf(distSqr)));
 
 		ret = STATE_CONTINUE;
 		m_retryCount--;
@@ -3905,16 +3906,16 @@ void AIFollowWaypointPathState::computeGoal(Bool useGroupOffsets)
 	if (m_priorWaypoint) {
 		dx = dest.x - m_priorWaypoint->getLocation()->x;
 		dy = dest.y - m_priorWaypoint->getLocation()->y;
-		angle = atan2(dy, dx);
+		angle = det_atan2f(dy, dx);
 		Real deltaAngle = angle - m_angle;
-		Real s = sin(deltaAngle);
-		Real c = cos(deltaAngle);
+		Real s = det_sinf(deltaAngle);
+		Real c = det_cosf(deltaAngle);
 		Real x = m_groupOffset.x * c - m_groupOffset.y * s;
 		Real y = m_groupOffset.y * c + m_groupOffset.x * s;
 		m_groupOffset.x = x;
 		m_groupOffset.y = y;
 	}	else {
-		angle = atan2(dy, dx);
+		angle = det_atan2f(dy, dx);
 	}
 	m_angle = angle;
 #endif

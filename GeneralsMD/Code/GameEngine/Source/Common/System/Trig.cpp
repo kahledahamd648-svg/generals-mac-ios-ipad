@@ -28,6 +28,7 @@
 // Converted to Generals by Matthew D. Campbell, February 2002
 
 #include "PreRTS.h"
+#include "DeterministicMath.h"
 
 #include <math.h>
 #include <limits.h>
@@ -99,7 +100,7 @@ void initTrig()
 	fprintf(fp, "static Int sinLookup[TRIG_RES] = {\n");
 	for( i=0; i<TRIG_RES; i++ ) {
 		angle = TWOPI * i / (Real)TRIG_RES;
-		sinLookup[i] = (Int)(sin(angle) * INT_ONE);
+		sinLookup[i] = (Int)(det_sinf(angle) * INT_ONE);
 
 		if (i == 0)
 		{
@@ -122,7 +123,7 @@ void initTrig()
 	for( i=0; i<2*INT_ONE; i++ ) {
 		r = (Real)i / (Real)INT_ONE - 1.0f;
 
-		arcCosLookup[i] = (Int)(acos( (double)r ) * INT_TWOPI / TWOPI );
+		arcCosLookup[i] = (Int)(det_acosf( (double)r ) * INT_TWOPI / TWOPI );
 
 		if (i == 0)
 		{

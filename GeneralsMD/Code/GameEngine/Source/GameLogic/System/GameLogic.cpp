@@ -28,6 +28,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #ifndef _WIN32
 #include <fenv.h>
@@ -876,7 +877,7 @@ static void populateRandomStartPosition( GameInfo *game )
 				{
 					Coord3D p1 = c1->second;
 					Coord3D p2 = c2->second;
-					startSpotDistance[i][j] = sqrt( sqr(p1.x-p2.x) + sqr(p1.y-p2.y) );
+					startSpotDistance[i][j] = det_sqrtf( sqr(p1.x-p2.x) + sqr(p1.y-p2.y) );
 				}
 			}
 			else

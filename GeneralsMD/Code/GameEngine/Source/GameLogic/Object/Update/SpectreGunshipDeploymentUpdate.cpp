@@ -28,6 +28,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #define DEFINE_DEATH_NAMES
 
@@ -218,7 +219,7 @@ Bool SpectreGunshipDeploymentUpdate::initiateIntentToDoSpecialPower(const Specia
     newGunship->setPosition( &creationCoord );
 
     //ORIENTATION
-		Real orient = atan2( m_initialTargetPosition.y - creationCoord.y, m_initialTargetPosition.x - creationCoord.x);
+		Real orient = det_atan2f( m_initialTargetPosition.y - creationCoord.y, m_initialTargetPosition.x - creationCoord.x);
     newGunship->setOrientation( orient );
 
     // ID

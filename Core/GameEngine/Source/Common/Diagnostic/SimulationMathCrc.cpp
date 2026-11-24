@@ -17,6 +17,7 @@
 */
 
 #include "PreRTS.h"
+#include "DeterministicMath.h"
 
 #include "Common/Diagnostic/SimulationMathCrc.h"
 #include "Common/XferCRC.h"
@@ -40,18 +41,18 @@ static void appendSimulationMathCrc(XferCRC &xfer)
         0.9f, 1.0f, 2.1f, 1.2f);
 
     factorsMatrix.Set(
-        WWMath::Sin(0.7f) * log10f(2.3f),
-        WWMath::Cos(1.1f) * powf(1.1f, 2.0f),
-        tanf(0.3f),
-        asinf(0.967302263f),
-        acosf(0.967302263f),
-        atanf(0.967302263f) * powf(1.1f, 2.0f),
-        atan2f(0.4f, 1.3f),
-        sinhf(0.2f),
-        coshf(0.4f) * tanhf(0.5f),
-        sqrtf(55788.84375f),
-        expf(0.1f) * log10f(2.3f),
-        logf(1.4f));
+        WWMath::Sin(0.7f),
+        WWMath::Cos(1.1f),
+        det_tanf(0.3f),
+        det_asinf(0.967302263f),
+        det_acosf(0.967302263f),
+        det_atanf(0.967302263f),
+        det_atan2f(0.4f, 1.3f),
+        det_sqrtf(55788.84375f),
+        det_powf(1.1f, 2.0f),
+        det_fmodf(123.456f, 7.89f),
+        det_sinf(-2.2f),
+        det_cosf(-2.2f));
 
     Matrix3D::Multiply(matrix, factorsMatrix, &matrix);
     matrix.Get_Inverse(matrix);

@@ -1171,6 +1171,24 @@ add_library(corei_gameengine_public INTERFACE)
 
 target_sources(corei_gameengine_private INTERFACE ${GAMEENGINE_SRC})
 
+if(APPLE OR CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    set(_SIMULATION_FP_OPTIONS -ffp-contract=off -fno-fast-math)
+elseif(MSVC AND NOT IS_VS6_BUILD)
+    set(_SIMULATION_FP_OPTIONS /fp:strict)
+endif()
+
+if(_SIMULATION_FP_OPTIONS)
+    foreach(_source IN LISTS GAMEENGINE_SRC)
+        if(_source MATCHES "^Source/(GameLogic|Common)/.*\\.cpp$")
+            set_source_files_properties(
+                "${CMAKE_CURRENT_SOURCE_DIR}/${_source}"
+                PROPERTIES COMPILE_OPTIONS "${_SIMULATION_FP_OPTIONS}"
+            )
+        endif()
+    endforeach()
+    unset(_SIMULATION_FP_OPTIONS)
+endif()
+
 target_include_directories(corei_gameengine_private INTERFACE
 #    Include/Precompiled
 )

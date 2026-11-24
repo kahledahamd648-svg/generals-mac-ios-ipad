@@ -26,6 +26,7 @@
 // The Artificial Intelligence system
 // Author: Michael S. Booth, November 2000
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #include "Common/CRCDebug.h"
 #include "Common/GameState.h"
@@ -709,7 +710,7 @@ Object *AI::findClosestEnemy( const Object *me, Real range, UnsignedInt qualifie
 		}
 
 		Real distSqr = ThePartitionManager->getDistanceSquared(me, theEnemy, FROM_BOUNDINGSPHERE_2D);
-		Real dist = sqrt(distSqr);
+		Real dist = det_sqrtf(distSqr);
 		Int modifier = dist/getAiData()->m_attackPriorityDistanceModifier;
 		Int modPriority = curPriority-modifier;
 		if (modPriority < 1)

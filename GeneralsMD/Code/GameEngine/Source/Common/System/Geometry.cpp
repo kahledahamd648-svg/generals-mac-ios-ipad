@@ -27,6 +27,7 @@
 // Desc:
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #define DEFINE_GEOMETRY_NAMES
 
@@ -173,17 +174,17 @@ void GeometryInfo::calcPitches(const Coord3D& thisPos, const GeometryInfo& that,
 	Coord3D thisCenter;
 	getCenterPosition(thisPos, thisCenter);
 
-	Real dxy = sqrt(sqr(thatPos.x - thisCenter.x) + sqr(thatPos.y - thisCenter.y));
+	Real dxy = det_sqrtf(sqr(thatPos.x - thisCenter.x) + sqr(thatPos.y - thisCenter.y));
 
 	Real dz;
 
 	/** @todo srj -- this could be better, by calcing it for all the corners, not just top-center
 		and bottom-center... oh well */
 	dz = (thatPos.z + that.getMaxHeightAbovePosition()) - thisCenter.z;
-	maxPitch = atan2(dz, dxy);
+	maxPitch = det_atan2f(dz, dxy);
 
 	dz = (thatPos.z - that.getMaxHeightBelowPosition()) - thisCenter.z;
-	minPitch = atan2(dz, dxy);
+	minPitch = det_atan2f(dz, dxy);
 }
 
 //=============================================================================
@@ -279,8 +280,8 @@ void GeometryInfo::get2DBounds(const Coord3D& geomCenter, Real angle, Region2D& 
 
 		case GEOMETRY_BOX:
 		{
-			Real c = (Real)cos(angle);
-			Real s = (Real)sin(angle);
+			Real c = (Real)det_cosf(angle);
+			Real s = (Real)det_sinf(angle);
 			Real exc = m_majorRadius*c;
 			Real eyc = m_minorRadius*c;
 			Real exs = m_majorRadius*s;
@@ -329,7 +330,7 @@ void GeometryInfo::clipPointToFootprint(const Coord3D& geomCenter, Coord3D& ptTo
 		{
 			Real dx = ptToClip.x - geomCenter.x;
 			Real dy = ptToClip.y - geomCenter.y;
-			Real radius = sqrt(sqr(dx) + sqr(dy));
+			Real radius = det_sqrtf(sqr(dx) + sqr(dy));
 			if (radius > m_majorRadius)
 			{
 				Real ratio = m_majorRadius / radius;
@@ -361,7 +362,7 @@ Bool GeometryInfo::isPointInFootprint(const Coord3D& geomCenter, const Coord3D& 
 		{
 			Real dx = pt.x - geomCenter.x;
 			Real dy = pt.y - geomCenter.y;
-			Real radius = sqrt(sqr(dx) + sqr(dy));
+			Real radius = det_sqrtf(sqr(dx) + sqr(dy));
 			return (radius <= m_majorRadius);
 			break;
 		}
@@ -506,8 +507,8 @@ void GeometryInfo::calcBoundingStuff()
 
 		case GEOMETRY_BOX:
 		{
-			m_boundingCircleRadius = sqrt(sqr(m_majorRadius) + sqr(m_minorRadius));
-			m_boundingSphereRadius = sqrt(sqr(m_majorRadius) + sqr(m_minorRadius) + sqr(m_height*0.5));
+			m_boundingCircleRadius = det_sqrtf(sqr(m_majorRadius) + sqr(m_minorRadius));
+			m_boundingSphereRadius = det_sqrtf(sqr(m_majorRadius) + sqr(m_minorRadius) + sqr(m_height*0.5));
 			break;
 		}
 	};

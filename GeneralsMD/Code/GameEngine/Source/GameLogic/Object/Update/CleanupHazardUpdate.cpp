@@ -29,6 +29,7 @@
 
 // INCLUDES ///////////////////////////////////////////////////////////////////////////////////////
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #define DEFINE_WEAPONSLOTTYPE_NAMES
 
@@ -172,7 +173,7 @@ UpdateSleepTime CleanupHazardUpdate::update()
 		AIUpdateInterface *ai = obj->getAI();
 		if( ai && (ai->isIdle() || ai->isBusy()) )
 		{
-			Real fDist = sqrt( ThePartitionManager->getDistanceSquared( obj, &m_pos, FROM_CENTER_2D ) );
+			Real fDist = det_sqrtf( ThePartitionManager->getDistanceSquared( obj, &m_pos, FROM_CENTER_2D ) );
 			if( fDist < 25.0f )
 			{
 				//Abort clean area because there's nothing left to clean!
@@ -204,7 +205,7 @@ void CleanupHazardUpdate::fireWhenReady()
 		bonus.clear();
 		Real fireRange = m_weaponTemplate->getAttackRange( bonus );
 		Object *me = getObject();
-		Real fDist = sqrt( ThePartitionManager->getDistanceSquared( me, target, FROM_CENTER_2D ) );
+		Real fDist = det_sqrtf( ThePartitionManager->getDistanceSquared( me, target, FROM_CENTER_2D ) );
 		if( fDist < fireRange )
 		{
 			//We are currently in range!

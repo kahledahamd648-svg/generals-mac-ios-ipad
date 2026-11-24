@@ -26,6 +26,7 @@
 // Author: Graham Smallwood, March 2002
 // Desc:   State machine that controls the approach and deployment of airborne cargo
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #define DEFINE_WEAPONSLOTTYPE_NAMES
 
@@ -202,8 +203,8 @@ UpdateSleepTime DeliverPayloadAIUpdate::update()
 				{
 					//Calc strafe ratio
 					Real startDiveDistance = getData()->m_diveStartDistance;
-					Real endDiveDistance = sqrt( endDiveDistanceSquared );
-					Real currentDistance = sqrt( currentDistanceSquared );
+					Real endDiveDistance = det_sqrtf( endDiveDistanceSquared );
+					Real currentDistance = det_sqrtf( currentDistanceSquared );
 
 					Real diveRatio = (startDiveDistance - currentDistance) / (startDiveDistance - endDiveDistance);
 
@@ -1108,7 +1109,7 @@ StateReturnType RecoverFromOffMapState::update() // Success if we should try aga
 		enterCoord.z = owner->getPosition()->z;
 	owner->setPosition(&enterCoord);
 
-	Real enterAngle = atan2(ai->getMoveToPos()->y - enterCoord.y, ai->getMoveToPos()->x - enterCoord.x);
+	Real enterAngle = det_atan2f(ai->getMoveToPos()->y - enterCoord.y, ai->getMoveToPos()->x - enterCoord.x);
 	owner->setOrientation(enterAngle);
 
 	PhysicsBehavior* physics = owner->getPhysics();
@@ -1148,7 +1149,7 @@ StateReturnType HeadOffMapState::onEnter() // Give move order out of town
 	Region3D terrainExtent;
 	TheTerrainLogic->getExtent( &terrainExtent );
 	const Real FUDGE = 1.2f;
-	Real HUGE_DIST = FUDGE * sqrt(sqr(terrainExtent.hi.x - terrainExtent.lo.x) + sqr(terrainExtent.hi.y - terrainExtent.lo.y));
+	Real HUGE_DIST = FUDGE * det_sqrtf(sqr(terrainExtent.hi.x - terrainExtent.lo.x) + sqr(terrainExtent.hi.y - terrainExtent.lo.y));
 
 	exitCoord.x += dir->x * HUGE_DIST;
 	exitCoord.y += dir->y * HUGE_DIST;

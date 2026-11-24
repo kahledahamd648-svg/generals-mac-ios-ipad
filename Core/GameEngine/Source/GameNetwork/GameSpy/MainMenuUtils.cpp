@@ -48,6 +48,7 @@
 
 #include "GameNetwork/DownloadManager.h"
 #include "GameNetwork/GameSpy/BuddyThread.h"
+#include "GameNetwork/GameSpy/CnCOnlineHosts.h"
 #include "GameNetwork/GameSpy/MainMenuUtils.h"
 #include "GameNetwork/GameSpy/PeerDefs.h"
 #include "GameNetwork/GameSpy/PeerThread.h"
@@ -184,6 +185,18 @@ static void startOnline()
 		TheWindowManager->winDestroy(onlineCancelWindow);
 		onlineCancelWindow = nullptr;
 	}
+
+	// GeneralsX: C&C:Online does not mirror EA's servserv patch/config/MOTD files.
+	// A failed pre-login check must not block the C&C:Online login screen, so continue
+	// with the built-in GameSpy config defaults. Login errors are still reported by GP.
+	// Define GENERALSX_REQUIRE_SERVSERV to restore the original blocking behaviour.
+#if !defined(GENERALSX_REQUIRE_SERVSERV)
+	if (cantConnectBeforeOnline)
+	{
+		DEBUG_LOG(("C&C:Online: servserv checks unavailable, continuing to login with default config"));
+		cantConnectBeforeOnline = FALSE;
+	}
+#endif
 
 	if (cantConnectBeforeOnline)
 	{
@@ -691,9 +704,9 @@ static GHTTPBool numPlayersOnlineCallback( GHTTPRequest request, GHTTPResult res
 void CheckOverallStats()
 {
 #if RTS_GENERALS
-	const char *const url = "http://gamestats.gamespy.com/ccgenerals/display.html";
+	const char *const url = "http://" CNCONLINE_GAMESTATS_HOST "/ccgenerals/display.html";
 #elif RTS_ZEROHOUR
-	const char *const url = "http://gamestats.gamespy.com/ccgenzh/display.html";
+	const char *const url = "http://" CNCONLINE_GAMESTATS_HOST "/ccgenzh/display.html";
 #endif
 	ghttpGet(url, GHTTPFalse, overallStatsCallback, nullptr);
 }
@@ -774,7 +787,7 @@ void HTTPThinkWrapper()
 {
 	if (s_asyncDNSLookupInProgress)
 	{
-		Char hostname[] = "servserv.generals.ea.com";
+		Char hostname[] = CNCONLINE_HTTP_HOST; // GeneralsX: C&C:Online replacement for servserv.generals.ea.com
 		Int ret = asyncGethostbyname(hostname);
 		switch(ret)
 		{
@@ -830,7 +843,7 @@ void StartPatchCheck()
 		TheGameText->fetch("GUI:CheckingForPatches"), CancelPatchCheckCallbackAndReopenDropdown);
 
 	s_asyncDNSLookupInProgress = TRUE;
-	Char hostname[] = "servserv.generals.ea.com";
+	Char hostname[] = CNCONLINE_HTTP_HOST; // GeneralsX: C&C:Online replacement for servserv.generals.ea.com
 	Int ret = asyncGethostbyname(hostname);
 	switch(ret)
 	{

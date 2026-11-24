@@ -27,6 +27,7 @@
 // Desc:   Implementation of missile behavior
 
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #include "Common/Thing.h"
 #include "Common/ThingTemplate.h"
@@ -232,7 +233,7 @@ void MissileAIUpdate::projectileFireAtObjectOrPosition( const Object *victim, co
 	Real deltaZ = victimPos->z - obj->getPosition()->z;
 	Real dx = victimPos->x - obj->getPosition()->x;
 	Real dy = victimPos->y - obj->getPosition()->y;
-	Real xyDist = sqrt(sqr(dx)+sqr(dy));
+	Real xyDist = det_sqrtf(sqr(dx)+sqr(dy));
 	if (xyDist<1) xyDist = 1;
 	Real zFactor = 0;
 	if (deltaZ>0) {
@@ -649,7 +650,7 @@ UpdateSleepTime MissileAIUpdate::update()
 	Coord3D newPos = *getObject()->getPosition();
 	if (m_noTurnDistLeft > 0.0f && m_state >= IGNITION)
 	{
-		Real distThisTurn = sqrtf(sqr(newPos.x-m_prevPos.x) + sqr(newPos.y-m_prevPos.y) + sqr(newPos.z-m_prevPos.z));
+		Real distThisTurn = det_sqrtf(sqr(newPos.x-m_prevPos.x) + sqr(newPos.y-m_prevPos.y) + sqr(newPos.z-m_prevPos.z));
 		m_noTurnDistLeft -= distThisTurn;
 		m_prevPos = newPos;
 	}

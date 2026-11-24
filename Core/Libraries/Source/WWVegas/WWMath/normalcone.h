@@ -117,7 +117,7 @@ inline float NormalCone::Get_Coplanar_Normals(const Vector3 & Input, Vector3 & O
 	if(length < WWMATH_EPSILON)
 		return 0.0f;
 
-	length = sqrt(length);
+	length = det_sqrtf(length);
 	cross /= length;
 
 	// Make a matrix3 which uses it as an axis of rotation and

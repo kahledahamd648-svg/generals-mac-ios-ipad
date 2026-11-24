@@ -32,6 +32,7 @@
 
 // INCLUDES ///////////////////////////////////////////////////////////////////////////////////////
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #include "Common/ActionManager.h"
 #include "Common/Player.h"
@@ -338,7 +339,7 @@ Object* CommandButtonHuntUpdate::scanClosestTarget()
 					}
 				}
 				Real distSqr = ThePartitionManager->getDistanceSquared(me, other, FROM_BOUNDINGSPHERE_2D);
-				Real dist = sqrt(distSqr);
+				Real dist = det_sqrtf(distSqr);
 				Int curPriority = data->m_scanRange - dist;
 				if (info) curPriority = info->getPriority(other->getTemplate());
 				if (curPriority == 0)

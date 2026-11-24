@@ -36,6 +36,8 @@
 #include "Common/MessageStream.h"
 #include "Common/Player.h"
 #include "Common/PlayerList.h"
+#include "Common/GlobalData.h"
+#include "Common/Diagnostic/SimulationMathCrc.h"
 #include "GameNetwork/NetworkInterface.h"
 #include "GameNetwork/udp.h"
 #include "GameNetwork/Transport.h"
@@ -51,6 +53,9 @@
 #include "GameLogic/ScriptEngine.h"
 #include "Common/Recorder.h"
 #include "GameClient/MessageBox.h"
+
+#include <cstdio>
+#include <ctime>
 
 
 #if defined(DEBUG_CRC)
@@ -377,6 +382,38 @@ void Network::setSawCRCMismatch()
 	TheScriptEngine->startEndGameTimer();
 
 	TheRecorder->logCRCMismatch();
+
+	AsciiString mismatchLogPath = TheGlobalData->getPath_UserData();
+	if (!mismatchLogPath.isEmpty())
+	{
+		mismatchLogPath.concat("NetworkMismatch.log");
+		FILE *mismatchLog = std::fopen(mismatchLogPath.str(), "a");
+		if (mismatchLog != nullptr)
+		{
+			const time_t timestamp = std::time(nullptr);
+			const Int frame = TheGameLogic->getFrame();
+			const UnsignedInt seedCRC = GetGameLogicRandomSeedCRC();
+			const UnsignedInt mathCRC = SimulationMathCrc::calculate();
+			if (std::fprintf(mismatchLog,
+					"CRC mismatch: time=%lld frame=%d compareFrame=%d runAhead=%d seedCRC=%08X mathCRC=%08X\n",
+					static_cast<long long>(timestamp), frame, frame - m_runAhead - 1, m_runAhead, seedCRC, mathCRC) < 0)
+			{
+				DEBUG_LOG(("Could not write CRC mismatch diagnostics to %s", mismatchLogPath.str()));
+			}
+			if (std::fclose(mismatchLog) != 0)
+			{
+				DEBUG_LOG(("Could not close CRC mismatch diagnostics at %s", mismatchLogPath.str()));
+			}
+		}
+		else
+		{
+			DEBUG_LOG(("Could not open CRC mismatch diagnostics at %s", mismatchLogPath.str()));
+		}
+	}
+	else
+	{
+		DEBUG_LOG(("Could not write CRC mismatch diagnostics because user data directory is unavailable"));
+	}
 
 	// dump GameLogic random seed
 	DEBUG_LOG(("Latest frame for mismatch = %d GameLogic frame = %d",

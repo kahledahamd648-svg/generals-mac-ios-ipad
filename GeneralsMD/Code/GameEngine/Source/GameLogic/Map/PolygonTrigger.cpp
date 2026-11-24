@@ -27,6 +27,7 @@
 // Author: John Ahlquist, November 2001
 
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #include "Common/DataChunk.h"
 #include "Common/MapObject.h"
@@ -286,7 +287,7 @@ void PolygonTrigger::updateBounds()	const
 	Real halfWidth = (m_bounds.hi.x - m_bounds.lo.x) / 2.0f;
 	Real halfHeight = (m_bounds.hi.y + m_bounds.lo.y) / 2.0f;
 
-	m_radius = sqrt(halfHeight*halfHeight + halfWidth*halfWidth);
+	m_radius = det_sqrtf(halfHeight*halfHeight + halfWidth*halfWidth);
 }
 
 

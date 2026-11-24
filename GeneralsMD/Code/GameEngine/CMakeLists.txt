@@ -1153,6 +1153,24 @@ add_library(z_gameengine STATIC)
 
 target_sources(z_gameengine PRIVATE ${GAMEENGINE_SRC})
 
+if(APPLE OR CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    set(_SIMULATION_FP_OPTIONS -ffp-contract=off -fno-fast-math)
+elseif(MSVC AND NOT IS_VS6_BUILD)
+    set(_SIMULATION_FP_OPTIONS /fp:strict)
+endif()
+
+if(_SIMULATION_FP_OPTIONS)
+    foreach(_source IN LISTS GAMEENGINE_SRC)
+        if(_source MATCHES "^Source/(GameLogic|Common)/.*\\.cpp$")
+            set_source_files_properties(
+                "${CMAKE_CURRENT_SOURCE_DIR}/${_source}"
+                PROPERTIES COMPILE_OPTIONS "${_SIMULATION_FP_OPTIONS}"
+            )
+        endif()
+    endforeach()
+    unset(_SIMULATION_FP_OPTIONS)
+endif()
+
 target_include_directories(z_gameengine PUBLIC
     Include
     ../CompatLib/Include  # Needed for d3dx8math.h in PCH
@@ -1182,6 +1200,10 @@ target_link_libraries(z_gameengine PUBLIC
     z_wwvegas
     d3d8lib  # Ensure DirectX8 headers available (Windows SDK or DXVK)
 )
+
+if(SAGE_USE_DETERMINISTIC_MATH)
+    target_compile_definitions(z_gameengine PRIVATE USE_DETERMINISTIC_MATH)
+endif()
 
 target_precompile_headers(z_gameengine PRIVATE
     [["Utility/CppMacros.h"]] # Must be first, to be removed when abandoning VC6

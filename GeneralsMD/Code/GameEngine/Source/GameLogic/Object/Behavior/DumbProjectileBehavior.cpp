@@ -27,6 +27,7 @@
 // Desc:
 
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 #include "Common/BezierSegment.h"
 #include "Common/GameCommon.h"
@@ -172,11 +173,11 @@ static Bool calcTrajectory(
 	Real dz = end.z - start.z;
 
 	// calculating the angle is trivial.
-	angle = atan2(dy, dx);
+	angle = det_atan2f(dy, dx);
 
 	// calculating the pitch requires a bit more effort.
 	Real horizDistSqr = sqr(dx) + sqr(dy);
-	Real horizDist = sqrt(horizDistSqr);
+	Real horizDist = det_sqrtf(horizDistSqr);
 
 	// calc the two possible pitches that will cover the given horizontal range.
 	// (this is actually only true if dz==0, but is a good first guess)
@@ -185,7 +186,7 @@ static Bool calcTrajectory(
 
 	// let's start by aiming directly for it. we know this isn't right (unless gravity
 	// is zero, which it's not) but is a good starting point...
-	Real theta = atan2(dz, horizDist);
+	Real theta = det_atan2f(dz, horizDist);
 	// if the angle isn't pretty shallow, we can get a better initial guess by using
 	// the code below...
 	const Real SHALLOW_ANGLE = 0.5f * PI / 180.0f;
@@ -290,7 +291,7 @@ static Bool calcTrajectory(
 #endif
 
 		vx = velocity*cosPitches[preferred];
-		Real actualRange = (vx*(vz + sqrt(root)))/gravity;
+		Real actualRange = (vx*(vz + det_sqrtf(root)))/gravity;
 		const Real CLOSE_ENOUGH_RANGE = 5.0f;
 		if (tooClose || (actualRange < horizDist - CLOSE_ENOUGH_RANGE))
 		{
@@ -369,7 +370,7 @@ void DumbProjectileBehavior::projectileFireAtObjectOrPosition( const Object *vic
 		// Some weapons want to scale their start speed to the range
 		Real minRange = detWeap->getMinimumAttackRange();
 		Real maxRange = detWeap->getUnmodifiedAttackRange();
-		Real range = sqrt(ThePartitionManager->getDistanceSquared( projectile, &victimPosToUse, FROM_CENTER_2D ) );
+		Real range = det_sqrtf(ThePartitionManager->getDistanceSquared( projectile, &victimPosToUse, FROM_CENTER_2D ) );
 		Real rangeRatio = (range - minRange) / (maxRange - minRange);
 		m_flightPathSpeed = (rangeRatio * (weaponSpeed - minWeaponSpeed)) + minWeaponSpeed;
 	}
@@ -611,7 +612,7 @@ UpdateSleepTime DumbProjectileBehavior::update()
 			Real distVictimMovedSqr = sqr(delta.x) + sqr(delta.y) + sqr(delta.z);
 			if (distVictimMovedSqr > 0.1f)
 			{
-				Real distVictimMoved = sqrtf(distVictimMovedSqr);
+				Real distVictimMoved = det_sqrtf(distVictimMovedSqr);
 				if (distVictimMoved > d->m_flightPathAdjustDistPerFrame)
 					distVictimMoved = d->m_flightPathAdjustDistPerFrame;
 				delta.normalize();

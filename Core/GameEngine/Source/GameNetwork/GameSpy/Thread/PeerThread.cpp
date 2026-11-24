@@ -36,6 +36,7 @@
 #include "Common/version.h"
 #include "GameNetwork/IPEnumeration.h"
 #include "GameNetwork/GameSpy/BuddyThread.h"
+#include "GameNetwork/GameSpy/CnCOnlineHosts.h"
 #include "GameNetwork/GameSpy/PeerDefs.h"
 #include "GameNetwork/GameSpy/PeerThread.h"
 #include "GameNetwork/GameSpy/PersistentStorageThread.h"
@@ -1389,7 +1390,7 @@ void PeerThreadClass::Thread_Function()
 				// check our connection
 				//if (m_isConnected)
 				//{
-				//	GetLocalChatConnectionAddress("peerchat.gamespy.com", 6667, localIP);
+				//	GetLocalChatConnectionAddress(CNCONLINE_PEERCHAT_HOST, 6667, localIP); // GeneralsX: C&C:Online
 				//}
 				}
 
@@ -2269,7 +2270,7 @@ void PeerThreadClass::connectCallback( PEER peer, PEERBool success )
 	resp.peerResponseType = PeerResponse::PEERRESPONSE_LOGIN;
 	resp.player.profileID = m_profileID;
 	resp.nick = m_loginName;
-	GetLocalChatConnectionAddress("peerchat.gamespy.com", 6667, localIP);
+	GetLocalChatConnectionAddress(CNCONLINE_PEERCHAT_HOST, 6667, localIP); // GeneralsX: C&C:Online
 	chatSetLocalIP(localIP);
 	resp.player.internalIP = ntohl(localIP);
 	resp.player.externalIP = ntohl(peerGetLocalIP(peer));

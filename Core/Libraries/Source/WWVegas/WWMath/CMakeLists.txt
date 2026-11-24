@@ -1,4 +1,6 @@
 set(WWMATH_SRC
+    DeterministicMath.cpp
+    DeterministicMath.h
     aabox.cpp
     aabox.h
     aabtreecull.cpp
@@ -90,6 +92,16 @@ target_link_libraries(core_wwmath PRIVATE
     corei_always
     core_wwsaveload
 )
+
+if(SAGE_USE_DETERMINISTIC_MATH)
+    target_compile_definitions(core_wwmath PUBLIC USE_DETERMINISTIC_MATH)
+endif()
+
+if(APPLE OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(core_wwmath PRIVATE -ffp-contract=off -fno-fast-math)
+elseif(MSVC AND NOT IS_VS6_BUILD)
+    target_compile_options(core_wwmath PRIVATE /fp:strict)
+endif()
 
 # @todo Test its impact and see what to do with the legacy functions.
 #add_compile_definitions(core_wwmath PUBLIC ALLOW_TEMPORARIES) # Enables legacy math with "temporaries"

@@ -30,6 +30,7 @@
 // USER INCLUDES //////////////////////////////////////////////////////////////////////////////////
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
 
+#include "DeterministicMath.h"
 #include "Common/ActionManager.h"
 #include "Common/GlobalData.h"
 #include "Common/Money.h"
@@ -480,7 +481,7 @@ void POWTruckAIUpdate::updateCollectingTarget()
 	{
 
 		// are we close enough to tell them to start moving to us
-		Real distSq = pow( us->getGeometryInfo().getBoundingSphereRadius() * 2.0f, 2 );
+		Real distSq = det_powf(us->getGeometryInfo().getBoundingSphereRadius() * 2.0f, 2.0f);
 		if( ThePartitionManager->getDistanceSquared( us, target, FROM_CENTER_2D ) <= distSq )
 		{
 

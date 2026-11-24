@@ -27,6 +27,7 @@
 // Author: Michael S. Booth, November 2001
 
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "DeterministicMath.h"
 
 // please talk to MDC (x36804) before taking this out
 #define NO_DEBUG_CRC
@@ -102,7 +103,7 @@ static Real heightToSpeed(Real height)
 {
 	// don't bother trying to remember how far we've fallen; instead,
 	// back-calc it from our speed & gravity... v = sqrt(2*g*h)
-	return sqrt(fabs(2.0f * TheGlobalData->m_gravity * height));
+	return det_sqrtf(fabs(2.0f * TheGlobalData->m_gravity * height));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -736,8 +737,8 @@ UpdateSleepTime PhysicsBehavior::update()
 			if (offset != 0.0f)
 			{
 				Vector3 xvec = mtx.Get_X_Vector();
-				Real xy = sqrtf(sqr(xvec.X) + sqr(xvec.Y));
-				Real pitchAngle = atan2(xvec.Z, xy);
+				Real xy = det_sqrtf(sqr(xvec.X) + sqr(xvec.Y));
+				Real pitchAngle = det_atan2f(xvec.Z, xy);
 				Real remainingAngle = (offset > 0) ? ((PI/2) - pitchAngle) : (-(PI/2) + pitchAngle);
 				Real s = Sin(remainingAngle);
 				pitchRateToUse *= s;
@@ -943,7 +944,7 @@ Real PhysicsBehavior::getVelocityMagnitude() const
 {
 	if (m_velMag == INVALID_VEL_MAG)
 	{
-		m_velMag = (Real)sqrtf( sqr(m_vel.x) + sqr(m_vel.y) + sqr(m_vel.z) );
+		m_velMag = (Real)det_sqrtf( sqr(m_vel.x) + sqr(m_vel.y) + sqr(m_vel.z) );
 	}
 	return m_velMag;
 }
@@ -965,7 +966,7 @@ Real PhysicsBehavior::getForwardSpeed2D() const
 	Real speedSquared = vx*vx + vy*vy;
 //	DEBUG_ASSERTCRASH( speedSquared != 0, ("zero speedSquared will overflow sqrtf()!") );// lorenzen... sanity check
 
-	Real speed = (Real)sqrtf( speedSquared );
+	Real speed = (Real)det_sqrtf( speedSquared );
 
 	if (dot >= 0.0f)
 		return speed;
@@ -988,7 +989,7 @@ Real PhysicsBehavior::getForwardSpeed3D() const
 
 	Real dot = vx + vy + vz;
 
-	Real speed = (Real)sqrtf( vx*vx + vy*vy + vz*vz );
+	Real speed = (Real)det_sqrtf( vx*vx + vy*vy + vz*vz );
 
 	if (dot >= 0.0f)
 		return speed;
@@ -1035,7 +1036,7 @@ void PhysicsBehavior::scrubVelocity2D( Real desiredVelocity )
 	}
 	else
 	{
-		Real curVelocity = sqrtf(m_vel.x*m_vel.x + m_vel.y*m_vel.y);
+		Real curVelocity = det_sqrtf(m_vel.x*m_vel.x + m_vel.y*m_vel.y);
 		if (desiredVelocity > curVelocity)
 		{
 			return;
@@ -1320,7 +1321,7 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 
 	m_lastCollidee = other->getID();
 
-	Real dist = sqrtf(distSqr);
+	Real dist = det_sqrtf(distSqr);
 	Real overlap = usRadius + themRadius - dist;
 
 	// if objects are coincident, dist is zero, so force would be infinite -- clearly
