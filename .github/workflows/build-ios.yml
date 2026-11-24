@@ -7,12 +7,6 @@ jobs:
   build-ios:
     runs-on: macos-15-intel
     timeout-minutes: 90
-    env:
-      CCACHE_DIR: ${{ runner.temp }}/ccache
-      CCACHE_MAXSIZE: "2G"
-      CCACHE_COMPRESS: "1"
-      CCACHE_COMPRESSLEVEL: "6"
-      CCACHE_SLOPPINESS: "pch_defines,time_macros,include_file_mtime,include_file_ctime"
 
     steps:
       - name: Checkout repository
@@ -103,6 +97,12 @@ jobs:
           fi
 
       - name: Configure and build Zero Hour engine for iOS
+        env:
+          CCACHE_DIR: ${{ runner.temp }}/ccache
+          CCACHE_MAXSIZE: "2G"
+          CCACHE_COMPRESS: "1"
+          CCACHE_COMPRESSLEVEL: "6"
+          CCACHE_SLOPPINESS: "pch_defines,time_macros,include_file_mtime,include_file_ctime"
         run: |
           ccache --set-config=max_size="$CCACHE_MAXSIZE"
           ccache --set-config=compress="$CCACHE_COMPRESS"
