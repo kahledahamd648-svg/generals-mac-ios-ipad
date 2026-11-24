@@ -44,6 +44,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+
+#undef gethostbyname
+#undef getaddrinfo
+#undef connect
 #include <stdint.h>
 
 #if !defined(_WIN32)
@@ -188,6 +192,14 @@ const char *CnCOnline_TranslateHost(const char *host, char *out, size_t outSize)
 	if (strcmp(lower, "gpcm.gamespy.com") == 0)
 	{
 		const char *translated = CNCONLINE_GPCM_HOST;
+		snprintf(out, outSize, "%s", translated);
+		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
+		return out;
+	}
+	if (strstr(lower, "available.gamespy.com") != NULL ||
+		strstr(lower, "available.server.cnc-online.net") != NULL)
+	{
+		const char *translated = CNCONLINE_AVAILABLE_HOST;
 		snprintf(out, outSize, "%s", translated);
 		fprintf(stderr, "[CNCOnline] redirect %s -> %s\n", host, translated);
 		return out;

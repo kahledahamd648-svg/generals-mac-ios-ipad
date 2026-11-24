@@ -25,22 +25,14 @@ if(NOT WIN32 AND TARGET gamespy)
     target_include_directories(gamespy PRIVATE
         "${GENERALSX_CNCONLINE_DIR}/Include/GameNetwork/GameSpy"
     )
-
-    foreach(_gs_module
-        gscommon gschat gsnatneg gsqr gsqr2 gscdkey gshttp gsgt2 gsgp gsgstats
-        gspinger gsserverbrowsing gspeer gspt gssake gswebservices gssc gsvoice2)
-        if(TARGET ${_gs_module})
-            target_compile_definitions(${_gs_module} PRIVATE
-                gethostbyname=CnCOnline_gethostbyname
-                getaddrinfo=CnCOnline_getaddrinfo
-                connect=CnCOnline_connect
-            )
-        endif()
-    endforeach()
+    target_sources(gamespy PRIVATE
+        "${CMAKE_CURRENT_LIST_DIR}/../Core/Libraries/Source/WWVegas/WWLib/cnc_dns_override.c"
+    )
 
     if(TARGET z_generals)
         target_sources(z_generals PRIVATE
             "${GENERALSX_CNCONLINE_DIR}/Source/GameNetwork/GameSpy/CnCOnlineHosts.c"
+            "${CMAKE_CURRENT_LIST_DIR}/../Core/Libraries/Source/WWVegas/WWLib/cnc_dns_override.c"
         )
         target_include_directories(z_generals PRIVATE
             "${GENERALSX_CNCONLINE_DIR}/Include/GameNetwork/GameSpy"

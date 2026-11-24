@@ -33,6 +33,12 @@ endif()
 # Top level project, doesn't really affect anything.
 project(genzh LANGUAGES C CXX)
 
+# Force the C&C:Online POSIX DNS/socket override into every C and C++ target.
+# The override header includes netdb.h before installing its wrappers.
+if(APPLE)
+    add_compile_options(-include "${CMAKE_SOURCE_DIR}/Core/Libraries/Source/WWVegas/WWLib/cnc_dns_override.h")
+endif()
+
 # GeneralsX @build BenderAI 10/02/2026
 # Linux port: Make CompatLib headers globally accessible so Core libraries (WWLib, WWMath, etc.)
 # can access platform compatibility types when building for non-Windows platforms
